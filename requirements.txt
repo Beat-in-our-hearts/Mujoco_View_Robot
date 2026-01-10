@@ -1,0 +1,11 @@
+# Mujoco_View_Robot Dependencies
+# Install with: pip install -r requirements.txt
+
+# Core dependencies
+mujoco
+mujoco-python-viewer
+scipy
+numpy
+pyyaml
+pyzmq
+protobuf<=3.20.0

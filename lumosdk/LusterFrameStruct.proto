@@ -1,0 +1,160 @@
+syntax = "proto3";
+
+package LusterFrameData;
+
+message Marker{
+    uint32 Id = 1;
+    string Name = 2;
+    float X = 3;
+    float Y = 4;
+    float Z = 5;
+}
+
+message Speed{
+    float fSpeed = 1;
+    float XfSpeed = 2;
+    float YfSpeed = 3;
+    float ZfSpeed = 4;
+}
+
+message AcceleratedSpeed{
+    float fAcceleratedSpeed = 1;
+    float XfAcceleratedSpeed = 2;
+    float YfAcceleratedSpeed = 3;
+    float ZfAcceleratedSpeed = 4;
+}
+
+message EulerAngle{
+    float X = 1;
+    float Y = 2;
+    float Z = 3;
+}
+
+message PALSTANCE{
+    float fXPalstance = 1;
+    float fYPalstance = 2;
+    float fZPalstance = 3;
+}
+
+message ACCPALSTANCE{
+    float AccfXPalstance = 1;
+    float AccfYPalstance = 2;
+    float AccfZPalstance = 3;
+}
+
+message RigidBody{
+    uint32 Id = 1;
+    string Name = 2;
+    float X = 3;
+    float Y = 4;
+    float Z = 5;
+    float qx = 6;
+    float qy = 7;
+    float qz = 8;
+    float qw = 9;
+    bool IsTrack = 10;
+    int32 QualityGrade = 11;
+    Speed speeds= 12;
+    AcceleratedSpeed acceleratedSpeeds = 13;
+    EulerAngle eulerAngle = 14;
+    PALSTANCE palstance = 15;
+    ACCPALSTANCE accpalstance = 16;
+}
+
+message SkeletonBone{
+    uint32 Id = 1;
+    string Name = 2;
+    float X = 3;
+    float Y = 4;
+    float Z = 5;
+    float qx = 6;
+    float qy = 7;
+    float qz = 8;
+    float qw = 9;
+    float Confidence = 10;
+    float AngleX = 11;
+    float AngleY = 12;
+    float AngleZ = 13;
+}
+
+message Skeleton{
+    uint32 Id = 1;
+    string Name = 2;
+    repeated SkeletonBone skeletonBones= 3;
+    bool IsTrack = 4;
+    string RobotName = 5;
+    map<string, float> MotorAngle = 6;
+}
+
+message MarkerSet{
+    string Name = 1;
+    repeated Marker markers = 2;
+}
+
+message ForcePlate{
+    float Fx = 1;
+	float Fy = 2;
+	float Fz = 3;
+	float Mx = 4;
+	float My = 5;
+	float Mz = 6;
+	float Lx = 7;
+	float Lz = 8;
+}
+
+message TimeCode{
+    uint32 mHours = 1;
+    uint32 mMinutes = 2;
+    uint32 mSeconds = 3;
+    uint32 mFrames = 4;
+    uint32 mSubFrame = 5;
+}
+
+message ElectromyographyData{
+    map<string, double> EmgData = 1;
+}
+
+
+message CustomSkeleton
+{
+    uint32 Id = 1;
+    string Name = 2;
+    repeated SkeletonBone customSkeletonBones= 3;
+    uint32 Type = 4;
+}
+
+message NewForcePlate
+{
+    map<uint32, ForcePlate> ForcePlateData = 1;
+}
+message ObjectInfo
+{
+    float X = 1;
+    float Y = 2;
+}
+message CameraObjectsInfo
+{
+    repeated ObjectInfo objects= 1;
+}
+message CameraObjects2D
+{
+    map<string, CameraObjectsInfo> CameraObjectsData = 1;
+}
+
+
+message Frame
+{
+    uint32 FrameId = 1;
+    uint64 TimeStamp = 2;
+    repeated Marker markers= 3;
+    repeated RigidBody rigidBodys = 4;
+    repeated Skeleton skeletons = 5;
+    uint64 uCameraSyncTime = 6;
+    uint64 uBroadcastTime = 7;
+    repeated MarkerSet markerSet = 8;
+    TimeCode timeCode = 9;
+    ElectromyographyData electromyographyData = 10;
+    repeated CustomSkeleton customSkeleton = 11;
+    NewForcePlate ForcePlate = 12;
+    CameraObjects2D CameraObject = 13;
+}

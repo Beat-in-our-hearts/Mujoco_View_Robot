@@ -1,0 +1,66 @@
+SDK_Motor:
+  - R_LEG_HIP_PITCH
+  - R_LEG_ANKLE_ROLL
+  - R_LEG_HIP_ROLL
+  - R_WRIST_ROLL
+  - R_LEG_HIP_YAW
+  - R_ELBOW
+  - L_SHOULDER_YAW
+  - L_LEG_HIP_YAW
+  - L_ELBOW
+  - WAIST_YAW
+  - L_LEG_ANKLE_ROLL
+  - R_SHOULDER_PITCH
+  - R_LEG_KNEE
+  - L_LEG_HIP_PITCH
+  - L_SHOULDER_PITCH
+  - R_WRIST_YAW
+  - R_SHOULDER_YAW
+  - WAIST_ROLL
+  - L_WRIST_ROLL
+  - L_LEG_HIP_ROLL
+  - R_WRIST_PITCH
+  - L_SHOULDER_ROLL
+  - L_WRIST_PITCH
+  - WAIST_PITCH
+  - L_LEG_KNEE
+  - L_WRIST_YAW
+  - R_SHOULDER_ROLL
+  - L_LEG_ANKLE_PITCH
+  - R_LEG_ANKLE_PITCH
+Motor_Joint_Map:
+  # "MujoCo Joint Name": "LuMoSDK Motor Name"
+  # Left Leg (6 DOF)
+  left_hip_pitch_joint: L_LEG_HIP_PITCH
+  left_hip_roll_joint: L_LEG_HIP_ROLL
+  left_hip_yaw_joint: L_LEG_HIP_YAW
+  left_knee_joint: L_LEG_KNEE
+  left_ankle_pitch_joint: L_LEG_ANKLE_PITCH
+  left_ankle_roll_joint: L_LEG_ANKLE_ROLL
+  # Right Leg (6 DOF)
+  right_hip_pitch_joint: R_LEG_HIP_PITCH
+  right_hip_roll_joint: R_LEG_HIP_ROLL
+  right_hip_yaw_joint: R_LEG_HIP_YAW
+  right_knee_joint: R_LEG_KNEE
+  right_ankle_pitch_joint: R_LEG_ANKLE_PITCH
+  right_ankle_roll_joint: R_LEG_ANKLE_ROLL
+  # Waist (3 DOF)
+  waist_yaw_joint: WAIST_YAW
+  waist_roll_joint: WAIST_ROLL
+  waist_pitch_joint: WAIST_PITCH
+  # Left Arm (7 DOF)
+  left_shoulder_pitch_joint: L_SHOULDER_PITCH
+  left_shoulder_roll_joint: L_SHOULDER_ROLL
+  left_shoulder_yaw_joint: L_SHOULDER_YAW
+  left_elbow_joint: L_ELBOW
+  left_wrist_roll_joint: L_WRIST_ROLL
+  left_wrist_pitch_joint: L_WRIST_PITCH
+  left_wrist_yaw_joint: L_WRIST_YAW
+  # Right Arm (7 DOF)
+  right_shoulder_pitch_joint: R_SHOULDER_PITCH
+  right_shoulder_roll_joint: R_SHOULDER_ROLL
+  right_shoulder_yaw_joint: R_SHOULDER_YAW
+  right_elbow_joint: R_ELBOW
+  right_wrist_roll_joint: R_WRIST_ROLL
+  right_wrist_pitch_joint: R_WRIST_PITCH
+  right_wrist_yaw_joint: R_WRIST_YAW
