@@ -3,7 +3,7 @@ from scipy.spatial.transform import Rotation as R
 
 # 全局变量用于调试
 _debug_call_count = 0
-_debug_enabled = True
+_debug_enabled = False  # 关闭调试日志提升性能
 
 def bvh_yup_to_zup(global_pos:np.ndarray, global_quat:np.ndarray):
     """
