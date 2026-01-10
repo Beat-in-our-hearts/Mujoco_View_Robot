@@ -69,18 +69,27 @@ def bvh_yup_to_zup_wxyz(global_pos:np.ndarray, global_quat:np.ndarray):
     quat_wxyz = xyzw_to_wxyz(quat_xyzw)
     return pos_zup, quat_wxyz
 
-def rotate_yup_to_zup(quat:np.ndarray):
-    """
-    Rotate a quaternion from Y-UP to Z-UP
-    Args:
-        quat: (N, 4) or (4,) array of quaternion in XYZW format (Y-UP)
-    """
-    # 旋转矩阵: X→X, Y→Z, Z→-Y (和bvh_yup_to_zup一致)
-    rotation_matrix = np.array([[1, 0, 0], [0, 0, -1], [0, 1, 0]])
-    rotation_transform = R.from_matrix(rotation_matrix)
+# def rotate_yup_to_zup(quat:np.ndarray):
+#     """
+#     Rotate a quaternion from Y-UP to Z-UP
+#     Args:
+#         quat: (N, 4) or (4,) array of quaternion in XYZW format (Y-UP)
+#     """
+#     # 旋转矩阵: X→X, Y→Z, Z→-Y (和bvh_yup_to_zup一致)
+#     rotation_matrix = np.array([[1, 0, 0], [0, 0, -1], [0, 1, 0]])
+#     rotation_transform = R.from_matrix(rotation_matrix)
     
-    # 对于全局绝对数据，使用简单的旋转变换
-    quat_yup = R.from_quat(quat)
-    quat_zup = rotation_transform * quat_yup
-    return quat_zup.as_quat()  # XYZW format
+#     # 对于全局绝对数据，使用简单的旋转变换
+#     quat_yup = R.from_quat(quat)
+#     quat_zup = rotation_transform * quat_yup
+#     return quat_zup.as_quat()  # XYZW format
     
+def bvh_yup_to_zup_fast(global_pos: np.ndarray, global_quat: np.ndarray):
+    R_mat = np.array([[1, 0, 0],
+                      [0, 0, -1],
+                      [0, 1, 0]], dtype=np.float32)
+
+    pos_zup = global_pos @ R_mat.T
+    rot_transform = R.from_matrix(R_mat)
+    quat_zup_wxyz = (rot_transform * R.from_quat(global_quat)).as_quat(scalar_first=True)
+    return pos_zup, quat_zup_wxyz

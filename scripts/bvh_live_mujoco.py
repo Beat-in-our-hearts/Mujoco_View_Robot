@@ -20,6 +20,8 @@ HUMAN_HEIGHT = 1.7  # meters
 DEBUG = False  # 开启调试输出
 DETAILED_LOG = False  # 开启详细日志
 frame_count = 0  # 帧计数器
+HEADLESS = True
+SMOOTH_ENABLE = False
 
 def debug_print(msg):
     if DEBUG:
@@ -35,7 +37,7 @@ retargeter = GMR(
 )
 
 # 平衡性能和稳定性
-retargeter.max_iter = 10  # 减少迭代，避免过拟合
+retargeter.max_iter = 1  # 减少迭代，避免过拟合
 print(f"IK配置: solver={retargeter.solver}, damping={retargeter.damping}, max_iter={retargeter.max_iter}")
 
 mj_xml = os.path.join(os.path.dirname(__file__), '../robots/g1/g1_29dof_rev_1_0.xml')
@@ -53,6 +55,8 @@ N = 100
 bone_pos_raw = np.empty((N, 3), dtype=np.float32)
 bone_quat_raw = np.empty((N, 4), dtype=np.float32)
 names = []
+cnt = 0
+cur_time = time.time()
 
 while True:
     frame = LuMoSDKClient.ReceiveData(0) # 0 :阻塞接收 1：非阻塞接收
@@ -125,56 +129,67 @@ while True:
     # 2. GMR retargeting
     qpos = retargeter.retarget(frame_data)
     
-    # 运动平滑：使用指数移动平均减少抖动
-    if qpos_smoothed is None:
-        qpos_smoothed = qpos.copy()
+    if SMOOTH_ENABLE:
+        # 运动平滑：使用指数移动平均减少抖动
+        if qpos_smoothed is None:
+            qpos_smoothed = qpos.copy()
+        else:
+            # 平滑公式: smoothed = alpha * current + (1-alpha) * previous
+            qpos_smoothed = SMOOTH_ALPHA * qpos + (1 - SMOOTH_ALPHA) * qpos_smoothed
+    
+        # 检测异常值：如果qpos变化过大，可能是IK发散
+        if qpos_prev is not None:
+            qpos_diff = np.abs(qpos - qpos_prev)
+            max_diff = np.max(qpos_diff)
+            # 关节角度变化限制：极度保守10度/帧
+            if max_diff > np.deg2rad(10):
+                if DEBUG and frame_count % 30 == 0:
+                    print(f"[警告] 检测到大幅度跳变 (最大变化: {np.rad2deg(max_diff):.1f}°)，限制变化幅度")
+                # 限制变化幅度而非完全丢弃
+                qpos = np.clip(qpos, qpos_prev - np.deg2rad(10), qpos_prev + np.deg2rad(10))
+        if DETAILED_LOG and frame_count % 30 == 0:
+            print(f"\n{'='*70}")
+            print(f"7. GMR retarget最终输出 - 帧 {frame_count}")
+            print(f"{'='*70}")
+            print(f"   qpos shape: {qpos.shape}")
+            print(f"   qpos前10个值: {qpos[:10]}")
+            # 前3个通常是位置，第4-7个是四元数
+            if len(qpos) >= 7:
+                base_pos = qpos[:3]
+                base_quat = qpos[3:7]
+                base_euler = R.from_quat(base_quat).as_euler('xyz', degrees=True)
+                print(f"   基座位置 (qpos[0:3]): {base_pos}")
+                print(f"   基座四元数 (qpos[3:7]): {base_quat}")
+                print(f"   基座欧拉角: [{base_euler[0]:6.1f}, {base_euler[1]:6.1f}, {base_euler[2]:6.1f}]")
+            
+            # 打印躯干相关的关节角度（根据G1机器人的关节顺序）
+            # 通常腰部关节在索引7附近
+            if len(qpos) > 10:
+                print(f"\\n   关节角度 (qpos[7:]):")
+                joint_names = ['waist_yaw', 'waist_roll', 'waist_pitch', 
+                            'left_hip_yaw', 'left_hip_roll', 'left_hip_pitch', 
+                            'left_knee', 'left_ankle_pitch', 'left_ankle_roll']
+                for i, name in enumerate(joint_names):
+                    if 7+i < len(qpos):
+                        angle_deg = np.rad2deg(qpos[7+i])
+                        print(f"     [{7+i}] {name:20s}: {qpos[7+i]:7.3f} rad ({angle_deg:7.1f}°)")
+                        if i >= 8:  # 只打印前9个关节
+                            break
     else:
-        # 平滑公式: smoothed = alpha * current + (1-alpha) * previous
-        qpos_smoothed = SMOOTH_ALPHA * qpos + (1 - SMOOTH_ALPHA) * qpos_smoothed
-    
-    # 检测异常值：如果qpos变化过大，可能是IK发散
-    if qpos_prev is not None:
-        qpos_diff = np.abs(qpos - qpos_prev)
-        max_diff = np.max(qpos_diff)
-        # 关节角度变化限制：极度保守10度/帧
-        if max_diff > np.deg2rad(10):
-            if DEBUG and frame_count % 30 == 0:
-                print(f"[警告] 检测到大幅度跳变 (最大变化: {np.rad2deg(max_diff):.1f}°)，限制变化幅度")
-            # 限制变化幅度而非完全丢弃
-            qpos = np.clip(qpos, qpos_prev - np.deg2rad(10), qpos_prev + np.deg2rad(10))
-    if DETAILED_LOG and frame_count % 30 == 0:
-        print(f"\n{'='*70}")
-        print(f"7. GMR retarget最终输出 - 帧 {frame_count}")
-        print(f"{'='*70}")
-        print(f"   qpos shape: {qpos.shape}")
-        print(f"   qpos前10个值: {qpos[:10]}")
-        # 前3个通常是位置，第4-7个是四元数
-        if len(qpos) >= 7:
-            base_pos = qpos[:3]
-            base_quat = qpos[3:7]
-            base_euler = R.from_quat(base_quat).as_euler('xyz', degrees=True)
-            print(f"   基座位置 (qpos[0:3]): {base_pos}")
-            print(f"   基座四元数 (qpos[3:7]): {base_quat}")
-            print(f"   基座欧拉角: [{base_euler[0]:6.1f}, {base_euler[1]:6.1f}, {base_euler[2]:6.1f}]")
-        
-        # 打印躯干相关的关节角度（根据G1机器人的关节顺序）
-        # 通常腰部关节在索引7附近
-        if len(qpos) > 10:
-            print(f"\\n   关节角度 (qpos[7:]):")
-            joint_names = ['waist_yaw', 'waist_roll', 'waist_pitch', 
-                          'left_hip_yaw', 'left_hip_roll', 'left_hip_pitch', 
-                          'left_knee', 'left_ankle_pitch', 'left_ankle_roll']
-            for i, name in enumerate(joint_names):
-                if 7+i < len(qpos):
-                    angle_deg = np.rad2deg(qpos[7+i])
-                    print(f"     [{7+i}] {name:20s}: {qpos[7+i]:7.3f} rad ({angle_deg:7.1f}°)")
-                    if i >= 8:  # 只打印前9个关节
-                        break
-    
+        qpos_smoothed = qpos.copy()
     # 3. Render in Mujoco Viewer - 使用平滑后的数据
-    mj_data.qpos[:] = qpos_smoothed
-    mujoco.mj_forward(mj_model, mj_data)
-    viewer.render()
+    if not HEADLESS:
+        mj_data.qpos[:] = qpos_smoothed
+        mujoco.mj_forward(mj_model, mj_data)
+        viewer.render()
+    else:
+        # print performance analyze
+        cnt += 1
+        if cnt % 100 == 0:
+            cost_time = time.time() - cur_time
+            fps = 100/cost_time
+            print(f"[INFO] {cnt=} {fps=}")
+            cur_time = time.time()
     
     # time.sleep(100)
     
