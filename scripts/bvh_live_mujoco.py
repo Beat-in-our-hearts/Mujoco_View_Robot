@@ -15,7 +15,7 @@ ip = "192.168.2.30"
 LuMoSDKClient.Init()
 LuMoSDKClient.Connnect(ip)
 
-HUMAN_HEIGHT = 1.7  # meters
+HUMAN_HEIGHT = 1.70  # meters
 DEBUG = False  # 开启调试输出
 DETAILED_LOG = False  # 开启详细日志
 frame_count = 0  # 帧计数器
@@ -39,10 +39,34 @@ retargeter = GMR(
 retargeter.max_iter = 1  # 减少迭代，避免过拟合
 print(f"IK配置: solver={retargeter.solver}, damping={retargeter.damping}, max_iter={retargeter.max_iter}")
 
-mj_xml = os.path.join(os.path.dirname(__file__), '../robots/g1/g1_29dof_rev_1_0.xml')
+mj_xml = os.path.join(os.path.dirname(__file__), '../robots/g1/my_g1_29dof.xml')
 mj_model = mujoco.MjModel.from_xml_path(mj_xml)
 mj_data = mujoco.MjData(mj_model)
 viewer = mujoco_viewer.MujocoViewer(mj_model, mj_data)
+
+# 重力线配置：body名称 -> geom名称
+GRAVITY_LINES = {
+    "pelvis": "pelvis_gravity_line",
+    "torso_link": "torso_gravity_line",
+    "left_wrist_roll_link": "left_wrist_gravity_line",
+    "right_wrist_roll_link": "right_wrist_gravity_line",
+    # "left_ankle_pitch_link": "left_ankle_gravity_line",
+    # "right_ankle_pitch_link": "right_ankle_gravity_line",
+}
+
+def update_gravity_lines():
+    """更新重力线位置和大小"""
+    for body_name, geom_name in GRAVITY_LINES.items():
+        body_id = mujoco.mj_name2id(mj_model, mujoco.mjtObj.mjOBJ_BODY, body_name)
+        geom_id = mujoco.mj_name2id(mj_model, mujoco.mjtObj.mjOBJ_GEOM, geom_name)
+        if body_id >= 0 and geom_id >= 0:
+            body_pos = mj_data.xpos[body_id]
+            height = body_pos[2]
+            if height > 0.01:
+                # 更新geom位置：x,y跟随body，z为高度一半
+                mj_model.geom_pos[geom_id] = [body_pos[0], body_pos[1], height / 2.0]
+                # 更新geom大小：半高
+                mj_model.geom_size[geom_id][1] = height / 2.0
 
 # 运动平滑参数
 SMOOTH_ALPHA = 0.9  # 超强平滑（会有延迟）
@@ -180,6 +204,7 @@ while True:
     if not HEADLESS:
         mj_data.qpos[:] = qpos_smoothed
         mujoco.mj_forward(mj_model, mj_data)
+        update_gravity_lines()  # 更新重力线位置
         viewer.render()
     else:
         # print performance analyze
