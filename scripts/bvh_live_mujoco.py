@@ -9,7 +9,6 @@ from general_motion_retargeting import GeneralMotionRetargeting as GMR
 import lumosdk.LuMoSDKClient as LuMoSDKClient
 from utils.rot_utils import (
     bvh_yup_to_zup_wxyz,
-    rotate_yup_to_zup,
 )
 ip = "192.168.2.30"
 
@@ -20,7 +19,7 @@ HUMAN_HEIGHT = 1.7  # meters
 DEBUG = False  # 开启调试输出
 DETAILED_LOG = False  # 开启详细日志
 frame_count = 0  # 帧计数器
-HEADLESS = True
+HEADLESS = False
 SMOOTH_ENABLE = False
 
 def debug_print(msg):
@@ -127,7 +126,7 @@ while True:
     }
     
     # 2. GMR retargeting
-    qpos = retargeter.retarget(frame_data)
+    qpos, _, _ = retargeter.retarget(frame_data)
     
     if SMOOTH_ENABLE:
         # 运动平滑：使用指数移动平均减少抖动
